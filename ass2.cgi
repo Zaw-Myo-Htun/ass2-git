@@ -134,7 +134,8 @@ if(defined param('Log In')) {
 	param('n',$n-1);
 	print profile_page();
 }elsif(defined param('search')) {
-	search_page();
+	$searchString = param('search');
+	search_page($searchString);
 }else{
 	browse_screen();
 	#print login();
@@ -151,7 +152,6 @@ sub browse_screen {
 		#$maxNumbertoShow = ($#students+1)%10;
 		$maxNumbertoShow = ($#students+1)-$n;	# make sure the following method won't have out of bound
 	}
-	print 'Search:  ', textfield('search');
 	for(my $i=0; $i<$maxNumbertoShow; $i++){
 		$briefProfile = "";
 		%briefDescription = ();
@@ -164,7 +164,7 @@ sub browse_screen {
 				$briefDescription{$copyNextLine}=$line;
 				$copyNextLine = "";
 			}
-			if($line =~ /^(gender|height|hair_colour|weight|birthdate):$/){
+			if($line =~ /^(gender|height|hair_colour|weight|birthdate|username):$/){
 				$copyNextLine = $1;
 				$briefDescription{$1}="";
 			}
@@ -177,7 +177,10 @@ sub browse_screen {
 		push @images,"$student_to_show/profile.jpg";
 		close $p;
 	}
+	
 	print start_form;
+	print 'Search:  ', textfield('search');
+	print submit('Search');
 	for(my $i=0; $i <$maxNumbertoShow; $i++) {
 	
 		$buttonName = $i+1;
@@ -205,6 +208,67 @@ sub browse_screen {
 
 sub search_page{
 
+	foreach $s (@students){
+		$briefProfile = "";
+		%briefDescription = ();
+			if($s =~ /$students_dir\/(.*)/){
+				if($1 =~ /@_/i){
+					my $profile_filename = "$s/profile.txt";
+					open my $p, "$profile_filename" or die "can not open $profile_filename: $!";
+					while ( $line = <$p>){
+						if($copyNextLine ne ""){
+							$briefDescription{$copyNextLine}=$line;
+							$copyNextLine = "";
+						}
+						if($line =~ /^(gender|height|hair_colour|weight|birthdate|username):$/){
+							$copyNextLine = $1;
+							$briefDescription{$1}="";
+						}
+					}
+					foreach $l (sort keys %briefDescription){
+						$briefDescription{$l} =~ s/\s*//;
+						$briefProfile .= "$l - $briefDescription{$l}";
+					}
+					push @descriptions,$briefProfile; 
+					push @images,"$s/profile.jpg";
+					close $p;
+					}
+			}
+	}
+	$size = $#descriptions+1;
+	if($size == 0){
+	print start_form;
+	print 'Search:  ', textfield('search');
+	print submit('Search');
+	print h3('Sorry, No Record is found!');
+	}else{
+	print start_form;
+	print 'Search:  ', textfield('search');
+	print submit('Search');
+	for(my $i=0; $i <$size; $i++) {
+	
+		$buttonName = $i+1;
+		print div({-class=>'div'},
+		 img({ 
+			src => "$images[$i]",
+			style => "width:150px;height:200px"
+			}), 
+		 	pre($descriptions[$i]),
+		#print a({href="$SCRIPT_NAME"},"More Detail.."),"/n";
+		
+		 submit("$buttonName","More Detail"),
+		);
+	}
+	
+    
+	print hidden('n'),"\n";
+	print div({-class=>'clear'},
+	 submit('Previous Set'),
+	 submit('Next Set'),
+	 submit('Log Out'),
+	);
+	print end_form,"\n";
+	}
 }
 
 sub profile_page {
