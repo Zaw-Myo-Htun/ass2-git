@@ -29,8 +29,6 @@ my @students = glob("$students_dir/*");
 if(defined param('Log In')) {
 	$username = param('username');
 	$password = param('password');
-	print start_form,"\n";		# delete later ?
-	print h3("$username - $password"),"\n";	# delete later ?
 	if($username eq "" || $password eq ""){
 		 print "<script>alert('Please enter Username and Password')</script>";
 		 print login();
@@ -68,18 +66,7 @@ if(defined param('Log In')) {
 			print "<script>alert('Incorrect Username and Password!')</script>";
 			print login();
 		}
-	
-			#$correct_password = <F>;	
-			#chomp $correct_password;
-			#if ($password eq $correct_password) {
-			#	print "You are authenticated.\n";
-			#} else {
-			#	print "Incorrect password!\n";
-			#}
-		#}
-		#browse_screen();
 	}
-		print end_form,"\n";	# delete later ?
 }elsif(defined param('Next Set')) {
 	$n = param('n') || 0;
 	if($n < $#students+1-10){ 
@@ -135,7 +122,8 @@ if(defined param('Log In')) {
 	param('n',$n+9);
 	print profile_page();
 }elsif(defined param('Back')) {
-	#my $n = param('n') || 0;
+	my $n = param('n') || 0;
+	param('n',$n-($n%10));
 	print browse_screen();
 }elsif(defined param('Next')) {
 	my $n = param('n') || 0;
@@ -145,8 +133,11 @@ if(defined param('Log In')) {
 	my $n = param('n') || 0;
 	param('n',$n-1);
 	print profile_page();
+}elsif(defined param('search')) {
+	search_page();
 }else{
-	print login();
+	browse_screen();
+	#print login();
 }
 print page_trailer();
 exit 0;	
@@ -154,13 +145,13 @@ exit 0;
 sub browse_screen {
 	$copyNextLine = "";
 	my $n = param('n') || 0;
-	print h1($n),"\n";
 	$n = min(max($n, 0), $#students);
 	$maxNumbertoShow = 10;
 	if($n > $#students+1-10){
 		#$maxNumbertoShow = ($#students+1)%10;
 		$maxNumbertoShow = ($#students+1)-$n;	# make sure the following method won't have out of bound
 	}
+	print 'Search:  ', textfield('search');
 	for(my $i=0; $i<$maxNumbertoShow; $i++){
 		$briefProfile = "";
 		%briefDescription = ();
@@ -186,24 +177,34 @@ sub browse_screen {
 		push @images,"$student_to_show/profile.jpg";
 		close $p;
 	}
-	print p;
-	print start_form, "\n";
+	print start_form;
 	for(my $i=0; $i <$maxNumbertoShow; $i++) {
-	print img({ 
-		src => "$images[$i]",
-		style => "width:250px;height:240px"
-		}), "\n";
-		print	pre(""),"\n";
-		print pre($descriptions[$i]),"\n";
-		#print a({href="$SCRIPT_NAME"},"More Detail.."),"/n";
+	
 		$buttonName = $i+1;
-		print submit("$buttonName","$buttonName"),"\n";
+		print div({-class=>'div'},
+		 img({ 
+			src => "$images[$i]",
+			style => "width:150px;height:200px"
+			}), 
+		 	pre($descriptions[$i]),
+		#print a({href="$SCRIPT_NAME"},"More Detail.."),"/n";
+		
+		 submit("$buttonName","More Detail"),
+		);
 	}
+	
+    
 	print hidden('n'),"\n";
-	print submit('Previous Set'),"\n";
-	print submit('Next Set'),"\n";
-	print submit('Log Out'),"\n";
-	print end_form, "\n";
+	print div({-class=>'clear'},
+	 submit('Previous Set'),
+	 submit('Next Set'),
+	 submit('Log Out'),
+	);
+	print end_form,"\n";
+}
+
+sub search_page{
+
 }
 
 sub profile_page {
@@ -236,31 +237,30 @@ sub profile_page {
 	
 	return p,
 		start_form, "\n",
+		img({ 
+			src => "$student_to_show/profile.jpg"
+			}), "\n\n",
 		pre($profile),"\n",
 		hidden('n'),"\n",
 		submit('Back'),"\n",
 		submit('Previous'),"\n",
 		submit('Next'),"\n",
-		img({ 
-			src => "$student_to_show/profile.jpg"
-			}), "\n\n",
-		end_form, "\n",
-		p, "\n";
+		end_form, "\n";
 }
 sub login{
 	return p,
 	start_form,"\n",
  	'Username: ', textfield('username'),
 	p,
-	'Password: ', password_field('password'),
+	'Password:  ', password_field('password'),
 	p,
  	submit('Log In'),
+	h1({"-font-size"=>"2em"},'Welcome to Love2041!'),
 	end_form;
 }
-
 sub page_header {
 	return header,
-   		start_html("-title"=>"LOVE2041", -bgcolor=>"#FEDCBA"),
+   		start_html("-title"=>"LOVE2041",-style=>{-src=>['homepage.css']}),
  		center(h2(i("LOVE2041")));
 }
 
