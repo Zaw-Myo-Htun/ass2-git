@@ -22,7 +22,7 @@ $briefProfile = "";
 %usernames = ();
 $user = "";
 
-$students_dir = "./students2";
+$students_dir = "./students";
 my @students = glob("$students_dir/*");
 
 
@@ -77,6 +77,30 @@ if(defined param('Log In')) {
 	$n = min(max($n, 0), $#students);
 	param('n',$n);
 	browse_screen($username);
+}elsif(defined param('searchNextSet')){
+	$username = param('username');
+	param('username',$username);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	$n = param('n') || 0;
+	if($n < $#searchResults+1-10){ 
+		param('n',$n+10);	
+	}
+	$searchString = param('searchString');
+	param('searchString',$searchString);
+	search_page($searchString);
+}elsif(defined param('searchPreviousSet')) {
+	$username = param('username');
+	param('username',$username);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	my $n = param('n') || 0;
+	$n = $n-10;
+	$n = min(max($n, 0), $#searchResults);
+	param('n',$n);
+	$searchString = param('searchString');
+	param('searchString',$searchString);
+	search_page($searchString);
 }elsif(defined param('Log Out')) {
 	print login();
 }elsif(defined param('1')) {
@@ -119,12 +143,81 @@ if(defined param('Log In')) {
 	my $n = param('n') || 0;
 	param('n',$n+9);
 	print profile_page();
+}elsif(defined param('search1')) {
+	my $n = param('n') || 0;
+	param('n',$n+0);
+	print $searchString;
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
+}elsif(defined param('search2')) {
+	my $n = param('n') || 0;
+	param('n',$n+1);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
+}elsif(defined param('search3')) {
+	my $n = param('n') || 0;
+	param('n',$n+2);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
+}elsif(defined param('search4')) {
+	my $n = param('n') || 0;
+	param('n',$n+3);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
+}elsif(defined param('search5')) {
+	my $n = param('n') || 0;
+	param('n',$n+4);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
+}elsif(defined param('search6')) {
+	my $n = param('n') || 0;
+	param('n',$n+5);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
+}elsif(defined param('search7')) {
+	my $n = param('n') || 0;
+	param('n',$n+6);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
+}elsif(defined param('search8')) {
+	my $n = param('n') || 0;
+	param('n',$n+7);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
+}elsif(defined param('search9')) {
+	my $n = param('n') || 0;
+	param('n',$n+8);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
+}elsif(defined param('search10')) {
+	my $n = param('n') || 0;
+	param('n',$n+9);
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	print search_profile_page();
 }elsif(defined param('Back')) {
 	$username = param('username');
 	param('username',$username);
 	my $n = param('n') || 0;
 	param('n',$n-($n%10));
 	browse_screen($username);
+}elsif(defined param('searchBack')) {
+	$username = param('username');
+	param('username',$username);
+	my $n = param('n') || 0;
+	param('n',$n-($n%10));
+	$searchString = param('searchString');
+	param('searchString',$searchString);
+	search_page($searchString);
 }elsif(defined param('Next')) {
 	my $n = param('n') || 0;
 	param('n',$n+1);
@@ -133,8 +226,17 @@ if(defined param('Log In')) {
 	my $n = param('n') || 0;
 	param('n',$n-1);
 	print profile_page();
+}elsif(defined param('searchNext')) {
+	my $n = param('n') || 0;
+	param('n',$n+1);
+	print search_profile_page();
+}elsif(defined param('searchPrevious')) {
+	my $n = param('n') || 0;
+	param('n',$n-1);
+	print search_profile_page();
 }elsif(defined param('search')) {
 	$searchString = param('search');
+	param('searchString',$searchString);
 	search_page($searchString);
 }else{
 	#browse_screen(); 
@@ -193,7 +295,7 @@ sub browse_screen {
 	}
 	print start_form;
 	
-	print 'Search:  ', textfield('search');
+	print 'Search by username:  ', textfield('search');
 	
 	print submit('Search');
 	print div({-class=>'clear'});
@@ -219,12 +321,16 @@ sub browse_screen {
 }
 
 sub search_page{
-
+	$searchString = param('searchString');
+	param('searchString',$searchString);
+	print h2("search - $searchString");
+	@searchResults = ();
 	foreach $s (@students){
 		$briefProfile = "";
 		%briefDescription = ();
 			if($s =~ /$students_dir\/(.*)/){
 				if($1 =~ /@_/i){
+					push @searchResults, $s;
 					my $profile_filename = "$s/profile.txt";
 					open my $p, "$profile_filename" or die "can not open $profile_filename: $!";
 					while ( $line = <$p>){
@@ -261,15 +367,17 @@ sub search_page{
 	$size = $#descriptions+1;
 	if($size == 0){
 		print start_form;
-		print 'Search:  ', textfield('search');
+		print 'Search by username:  ', textfield('search');
 		print submit('Search');
+		print div({-class=>'clear'});
 		print h3('Sorry, No Record is found!');
 	}else{
 		print start_form;
-		print 'Search:  ', textfield('search');
+		print 'Search by username:  ', textfield('search');
 		print submit('Search');
+		print div({-class=>'clear'});
 		for(my $i=0; $i <$size; $i++) {
-		$buttonName = $i+1;
+		$buttonName = "search".($i+1);
 		print div({-class=>'div'},
 		 	img({ 
 			src => "$images[$i]",
@@ -280,8 +388,13 @@ sub search_page{
 		);
 	}
 	print hidden('n'),"\n";
+	print hidden('searchResults', @searchResults);
+	print hidden('username'),"\n";
+	print hidden('searchString'),"\n";
 	print div({-class=>'clear'},
 	 submit('Back'),
+	 submit('searchPreviousSet','Previous Set'),
+	 submit('searchNextSet','Next Set'),
 	 );
 	print end_form,"\n";
 	}
@@ -333,8 +446,57 @@ sub profile_page {
 		end_form, "\n";
 }
 
-sub login{
+sub search_profile_page {
+	my $n = param('n') || 0;
+	my @searchResults = param('searchResults'); 
+	param('searchResults',@searchResults);
+	
+	$searchString = param('searchString');
+	param('searchString',$searchString);
+	print h2("search - $searchString");
+	#my @students = glob("$students_dir/*");
+	$n = min(max($n, 0), $#searchResults);
+	param('n',$n);
+	my $student_to_show  = $searchResults[$n];
+	my $profile_filename = "$student_to_show/profile.txt";
+	open my $p, "$profile_filename" or die "can not open $profile_filename: $!";
+	while ( $line = <$p>){
+		if($skipLines == 0){
+			if($line =~ /^(name:|password:|email:|courses:)$/){
+				$skipLines = 1;
+			}else{
+				$profile .= $line;
+			}
+		}else{
+			if(not($line =~ /^(name:|password:|email:|courses:)$/)){
+				if($line =~ /:$/){
+				$profile .= $line;
+				$skipLines = 0;
+				}
+			}
+		}
+	}
+	
+	close $p;
+	
+	
 	return p,
+		start_form, "\n",
+		img({ 
+			src => "$student_to_show/profile.jpg"
+			}), "\n\n",
+		pre($profile),"\n",
+		hidden('n'),"\n",
+		hidden('username'),"\n",
+		hidden('searchResults'),"\n",
+		hidden('searchString'),"\n",
+		submit('searchBack','Back'),"\n",
+		submit('searchPrevious','Previous'),"\n",
+		submit('searchNext','Next'),"\n",
+		end_form, "\n";
+}
+sub login{
+		return p,
 		start_form,"\n",
  		'Username: ', textfield('username'),
 		p,
@@ -382,6 +544,7 @@ sub match_gender {
 	if($prefGender eq ""){
 		my $profile_filename = "$students_dir/$user/profile.txt";
 		open $p, "$profile_filename" or die "can not open $profile_filename: $!";
+		
 		while($line = <$p>){
 			if($copyNextLine ne ""){
 				$userGender = $line;
@@ -391,12 +554,14 @@ sub match_gender {
 				$copyNextLine = $1;
 			}
 		}
-		if($userGender == "male"){
+		if($userGender eq "male"){
 			 $prefGender = "female";
+			 
 		}else{
 			 $prefGender = "male";
 		}
 	}
+	
 	for($i = 0 ;$i < $#indexs+1;$i++){
 		my $gender = "";
 		my $student_to_show  = $students[$indexs[$i]];
@@ -404,6 +569,8 @@ sub match_gender {
 		open $p, "$profile_filename" or die "can not open $profile_filename: $!";
 		while($line = <$p>){
 			if($copyNextLine ne ""){
+				$line =~ s/^\s+//;
+				$line =~ s/\s+$//;
 				$gender = $line;
 				$copyNextLine = "";
 			}
@@ -411,8 +578,10 @@ sub match_gender {
 				$copyNextLine = $1;
 			}
 		}
+		
 		if($gender eq $prefGender){
 			push @prefIndex, $indexs[$i];
+			
 		}else{
 			push @notPrefIndex, $indexs[$i];
 		}
